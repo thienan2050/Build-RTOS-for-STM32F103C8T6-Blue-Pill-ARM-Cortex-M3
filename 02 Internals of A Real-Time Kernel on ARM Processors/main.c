@@ -47,6 +47,12 @@ typedef struct
 volatile uint32_t tick;
 volatile uint32_t _tick;
 REGISTER_32 *GPIOC_ODR;
+uint32_t LED1_stack[40];
+uint32_t LED2_stack[40];
+
+uint32_t *SP_LED1 = &LED1_stack[40];
+uint32_t *SP_LED2 = &LED2_stack[40];
+
 void GPIO_Init(void);
 void DelayS(uint32_t seconds);
 void LED1_ON(void);
@@ -60,16 +66,26 @@ void LED2_main(void);
 void LED3_main(void);
 int main(void)
 {
-	volatile uint8_t start = 0U;
 	GPIO_Init();
-	if(start)
-	{
-		LED1_main();
-	}
-	else 
-	{
-		LED2_main();
-	}
+	/* Stack frame for LED1 thread */
+	*(--SP_LED1) = (1U << 24); 						/* xPSR */
+	*(--SP_LED1) = (uint32_t)&LED1_main;  /* PC */
+	*(--SP_LED1) = 0x0000000DU; 					/* LR */
+	*(--SP_LED1) = 0x0000000EU; 					/* R12 */
+	*(--SP_LED1) = 0x0000000AU; 					/* R3 */
+	*(--SP_LED1) = 0x0000000EU; 					/* R2 */
+	*(--SP_LED1) = 0x0000000AU; 					/* R1 */
+	*(--SP_LED1) = 0x0000000DU; 					/* R0 */
+	
+	/* Stack frame for LED2 therad */
+	*(--SP_LED2) = (1U << 24); 						/* xPSR */
+	*(--SP_LED2) = (uint32_t)&LED2_main;  /* PC */
+	*(--SP_LED2) = 0x0000000BU; 					/* LR */
+	*(--SP_LED2) = 0x0000000EU; 					/* R12 */
+	*(--SP_LED2) = 0x0000000EU; 					/* R3 */
+	*(--SP_LED2) = 0x0000000EU; 					/* R2 */
+	*(--SP_LED2) = 0x0000000EU; 					/* R1 */
+	*(--SP_LED2) = 0x0000000FU; 					/* R0 */
 	while(1);
 }
 

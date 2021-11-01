@@ -46,27 +46,31 @@ typedef struct
 
 volatile uint32_t tick;
 volatile uint32_t _tick;
+REGISTER_32 *GPIOC_ODR;
 void GPIO_Init(void);
 void DelayS(uint32_t seconds);
+void LED1_ON(void);
+void LED1_OFF(void);
+void LED2_ON(void);
+void LED2_OFF(void);
+void LED3_ON(void);
+void LED3_OFF(void);
+void LED1_main(void);
+void LED2_main(void);
+void LED3_main(void);
 int main(void)
 {
-	REGISTER_32 *GPIOC_ODR;
+	volatile uint8_t start = 0U;
 	GPIO_Init();
-
-	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
-	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
-	
-	while(1)
+	if(start)
 	{
-		DelayS(1);
-		GPIOC_ODR->bit13 = 0;
-		GPIOC_ODR->bit14 = 0;
-		GPIOC_ODR->bit15 = 0;
-		DelayS(1);
-		GPIOC_ODR->bit13 = 1;
-		GPIOC_ODR->bit14 = 1;
-		GPIOC_ODR->bit15 = 1;
+		LED1_main();
 	}
+	else 
+	{
+		LED2_main();
+	}
+	while(1);
 }
 
 
@@ -122,3 +126,83 @@ void DelayS(uint32_t seconds)
 	seconds *= 100;
 	while((getTick() - temp) < seconds);
 }
+
+
+void LED1_ON(void)
+{
+	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
+	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
+	GPIOC_ODR->bit15 = 1;
+}
+
+void LED1_OFF(void)
+{
+	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
+	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
+	GPIOC_ODR->bit15 = 0;
+}
+
+void LED2_ON(void)
+{
+	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
+	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
+	GPIOC_ODR->bit13 = 1;
+}
+
+void LED2_OFF(void)
+{
+	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
+	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
+	GPIOC_ODR->bit13 = 0;
+}
+
+void LED3_ON(void)
+{
+	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
+	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
+	GPIOC_ODR->bit14 = 1;
+}
+
+void LED3_OFF(void)
+{
+	// Port output data register (GPIOC_ODR) (x=A..G), page 172/1133
+	GPIOC_ODR = (REGISTER_32 *)(GPIOC_ADDR + 0x0C);
+	GPIOC_ODR->bit14 = 0;
+}
+
+
+void LED1_main(void)
+{
+	while(1)
+	{
+		LED1_ON();
+		DelayS(1);
+		LED1_OFF();
+		DelayS(1);
+	}
+}
+
+void LED2_main(void)
+{
+	while(1)
+	{
+		LED2_ON();
+		DelayS(1);
+		LED2_OFF();
+		DelayS(1);
+	}
+}
+
+
+void LED3_main(void)
+{
+	while(1)
+	{
+		LED3_ON();
+		DelayS(1);
+		LED3_OFF();
+		DelayS(1);
+	}
+}
+
+

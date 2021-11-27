@@ -16,59 +16,102 @@ ARM Macro Assembler    Page 1
                                                             t, the proceesor wi
                                                             ll automatically sa
                                                             ves 8 Registers to 
-                                                            Stack Frame ( R0, R
-                                                            1, R2, R3, R12, LR,
-                                                             PC, xPSR), so we h
-                                                            ave to save the rem
-                                                            aining registers.
+                                                            TCB_STACK[x] ( R0, 
+                                                            R1, R2, R3, R12, LR
+                                                            , PC, xPSR ), so we
+                                                             have to save the r
+                                                            emaining registers 
+                                                            onto TCB_STACK[x].
     8 00000000 B672            CPSID            I           ; Disable interrupt
                                                             
     9 00000002 E92D 0FF0       PUSH             {R4 - R11}  ; Save R4, R5, R6, 
                                                             R7, R8, R9, R10, R1
-                                                            1
-   10 00000006 480D            LDR              R0, =currentPt ;   ; Load value
-                                                             of currentPt(taskX
-                                                            's address) to R0
-   11 00000008 6801            LDR              R1, [R0]    ; R1 = R0 =  curren
-                                                            tPt
-   12 0000000A F8C1 D000       STR              SP, [R1]    ; SP = currentPt
-   13 0000000E 6849            LDR              R1, [R1, #4] ; R1 = currentPt->
-                                                            Next [ Number #4 ta
-                                                            kes us to the secon
-                                                            d entry in TCB ]
-   14 00000010 6001            STR              R1, [R0]    ; currentPt = R1
-   15 00000012 F8D1 D000       LDR              SP, [R1]    ; SP = currentPt->s
+                                                            1 onto TCB_STACK[x]
+                                                            .
+   10 00000006 480D            LDR              R0, =currentPt ;   ; R0 = curre
+                                                            ntPt(=&tcb[x])
+   11 00000008 6801            LDR              R1, [R0, #0] ; R1 = R0(=current
+                                                            Pt)->stackPt [Numbe
+                                                            r #0 takes us to th
+                                                            e first entry of TC
+                                                            B]
+   12 0000000A F8C1 D000       STR              SP, [R1]    ; R1(=currentPt->st
+                                                            ackPt) = SP
+   13 0000000E         
+   14 0000000E 6849            LDR              R1, [R1, #4] ; R1 = currentPt->
+                                                            nextPt [ Number #4 
+                                                            takes us to the sec
+                                                            ond entry of TCB ]
+   15 00000010 6001            STR              R1, [R0]    ; R0 (=currentPt) =
+                                                             R1(=currentPt->nex
+                                                            tPt) ( Next TCB )
+   16 00000012 F8D1 D000       LDR              SP, [R1]    ; SP = currentPt->s
                                                             tackPt
-   16 00000016 E8BD 0FF0       POP              {R4 - R11}
-   17 0000001A B662            CPSIE            I           ; Enable interrupt
-   18 0000001C 4770            BX               LR          ; Automatically res
-                                                            tore 8 stored regis
-                                                            ters 
-   19 0000001E         
-   20 0000001E         osSchedulerLaunch
-   21 0000001E 4807            LDR              R0, =currentPt
-   22 00000020 6802            LDR              R2, [R0]    ; R2 = currentPt
-   23 00000022 F8D2 D000       LDR              SP, [R2]    ; SP = currentPt->s
-                                                            tackPt
-   24 00000026 E8BD 0FF0       POP              {R4 - R11}
-   25 0000002A BC0F            POP              {R0 - R3}
-   26 0000002C F85D CB04       POP              {R12}
-   27 00000030 B001            ADD              SP, SP, #4
-   28 00000032 F85D EB04       POP              {LR}
-   29 00000036 B001            ADD              SP, SP, #4
-   30 00000038 B662            CPSIE            I
-   31 0000003A 4770            BX               LR
-   32 0000003C         
-   33 0000003C                 ALIGN
-   34 0000003C                 END
-              00000000 
-Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
+   17 00000016 E8BD 0FF0       POP              {R4 - R11}  ; Restore R4 - R11 
+                                                            from TCB_STACK[x] t
+                                                            o Special Registers
+                                                            
+   18 0000001A B662            CPSIE            I           ; Enable interrupt
+   19 0000001C 4770            BX               LR          ; Causes a branch t
+                                                            o the address conta
+                                                            ined in LR and exch
+                                                            anges the instructi
+                                                            on set.
+   20 0000001E         
+   21 0000001E         osSchedulerLaunch
+   22 0000001E 4807            LDR              R0, =currentPt ; R0 = currentPt
+                                                            (&tcb[0]).
+   23 00000020 6802            LDR              R2, [R0]    ; R2 = R0 = current
+                                                            Pt(&tcb[0]).
 
 
 
 ARM Macro Assembler    Page 2 
 
 
+   24 00000022 F8D2 D000       LDR              SP, [R2, #0] ; SP = R2(&tcb[0])
+                                                            ->stackPt, now SP p
+                                                            oints to TCB_STACK[
+                                                            0].
+   25 00000026 E8BD 0FF0       POP              {R4 - R11}  ; Get R4 - R11 from
+                                                             TCB_STACK[0] to Sp
+                                                            ecial Registers.
+   26 0000002A BC0F            POP              {R0 - R3}   ; Get R0 - R3  from
+                                                             TCB_STACK[0] to Sp
+                                                            ecial Registers.
+   27 0000002C F85D CB04       POP              {R12}       ; Get R12 from TCB_
+                                                            STACK[0] to Special
+                                                             Register.
+   28 00000030 B001            ADD              SP, SP, #4  ; The next register
+                                                             in TCB_STACK[0] is
+                                                              SP, we will skip 
+                                                            it and move to the 
+                                                            next register - LR.
+                                                            
+   29 00000032 F85D EB04       POP              {LR}        ; Load LR from TCB_
+                                                            STACK[0] into Speci
+                                                            al Register LR. LR 
+                                                            contains address of
+                                                             function LED1_Task
+                                                            .
+   30 00000036 B001            ADD              SP, SP, #4  ; Skip PC. Now SP p
+                                                            oints at xPSR in TC
+                                                            B_STACK[0], lowest 
+                                                            of our TCB_STACK[0]
+                                                            . 
+   31 00000038 B662            CPSIE            I           ; Enable Systick in
+                                                            terrupt as we disab
+                                                            led it before. 
+   32 0000003A 4770            BX               LR          ; Causes a branch t
+                                                            o the address conta
+                                                            ined in LR and exch
+                                                            anges the instructi
+                                                            on set.
+   33 0000003C         
+   34 0000003C                 ALIGN
+   35 0000003C                 END
+              00000000 
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
 ork --depend=.\objects\oskernel_1.d -o.\objects\oskernel_1.o -I"C:\Users\thien\
 Desktop\Build-RTOS-for-STM32F103C8T6-Blue-Pill-ARM-Cortex-M3\13 RTOS Scheduler 
 Using SysTick Exceptions only\RTE" -I"C:\Users\thien\Desktop\Build-RTOS-for-STM
@@ -103,7 +146,7 @@ osSchedulerLaunch 0000001E
 
 Symbol: osSchedulerLaunch
    Definitions
-      At line 20 in file osKernel.s
+      At line 21 in file osKernel.s
    Uses
       At line 5 in file osKernel.s
 Comment: osSchedulerLaunch used once
@@ -121,7 +164,7 @@ Symbol: currentPt
       At line 3 in file osKernel.s
    Uses
       At line 10 in file osKernel.s
-      At line 21 in file osKernel.s
+      At line 22 in file osKernel.s
 
 1 symbol
 339 symbols in table

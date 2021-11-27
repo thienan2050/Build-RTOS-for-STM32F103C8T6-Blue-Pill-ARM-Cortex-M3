@@ -178,7 +178,7 @@ void LED3_OFF(void)
 void Delay(void)
 {
 	int i;
-	for (i = 0; i < 2500000; i++);
+	for (i = 0; i < 500000; i++);
 }
 
 
